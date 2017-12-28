@@ -7,7 +7,8 @@ from imutils.video import VideoStream
 from imutils import face_utils
 from sklearn.svm import SVC
 
-fishface = cv2.face.FisherFaceRecognizer_create()
+fishface = cv2.face.createFisherFaceRecognizer()
+# fishface = cv2.face.FisherFaceRecognizer_create()
 classifier = SVC(kernel='linear', probability=True, tol=1e-3)
 
 print("making sets...")
