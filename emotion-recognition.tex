@@ -48,6 +48,7 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \newpage
+\renewcommand{\contentsname}{Índice}
 \tableofcontents
 \thispagestyle{empty}
 
@@ -56,27 +57,34 @@
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+\section{Introdução}
+Reconhecimento de emoções é sem duvida algo que, para um humano normal é rápido, mas nem sempre tão simples, porém uma tarefa difícil para maquina. A fim de solidificar o conhecimento adquirido no estudo de visão computacional propomos a presente pesquisa que consiste em construir uma solução que possa classificar um banco de imagens baseadas nas emoções expressadas em cada imagem. E por fim avaliar a acuracidade da solução em relação ao resultado de sua classificação.
+
 \section{Objetivos}
+
+O presente trabalho teve como objetivo principal realizar uma pesquisa exploratória sobre métodos de conhecimento de emoções, a fim de solidificar os conhecimentos adquiridos no estudo de computação gráfica, mais especificamente no assunto de visão computacional. Para isso os objetivos específicos a serem alcançados foram: Elaborar uma solução algorítmica que, dado um banco de imagens, ele possa reconhecer as emoções para cada imagem no banco. Viabilizar um banco de imagens ou adquirir um disponibilizado por outros autores. Classificar, por meio da solução proposta, as imagens agrupando-as por emoção. Por fim, disponibilizar a metodologia utilizada, bem como os resultados obtidos por meio de um artigo acadêmico.
 
 \section{Tecnologias utilizadas}
 
 \subsection{OpenCV + DLib + SKLearn}
 
-O OpenCV possui algumas classes de reconhecimento de face do qual usaremos o \href{http://www.scholarpedia.org/article/Fisherfaces}{FisherFace}. \href{http://dlib.net/}{Dlib} também é uma biblioteca para reconhecimento de faces cuja técnica consiste em marcar o rosto com pontos indicando as regiões da face (como olhos, boca, nariz, etc).
+O OpenCV é uma biblioteca de visão computacional de Código Aberto. O OpenCV foi construído para fornecer uma infra-estrutura comum para aplicações de visão por computador e acelerar o uso da percepção da máquina. Esta biblioteca possui algumas classes de reconhecimento de face do qual usaremos o \href{http://www.scholarpedia.org/article/Fisherfaces}{FisherFace}. 
+
+\href{http://dlib.net/}{Dlib} também é uma biblioteca para reconhecimento de faces cuja técnica consiste em marcar o rosto com pontos indicando as regiões da face (como olhos, boca, nariz, etc).
 
 Essas duas bibliotecas serão utilizadas para o reconhecimento de emoções e comparadas para verificar qual delas chegam mais próximo do resultado desejado. Usaremos o dlib em conjunto com um algoritmo de aprendizado de máquina do \href{http://scikit-learn.org/stable/}{sci-kit learn}.
 
 \subsection{CK Dataset}
 
-O conjunto de dados \href{http://www.pitt.edu/~emotion/ck-spread.htm}{Cohn-Kanade} será utilizado como base para o treinamento dos classificadores.
+O conjunto de dados \href{http://www.pitt.edu/~emotion/ck-spread.htm}{Cohn-Kanade} será utilizado como base para o treinamento dos classificadores (no decorrer do artigo utilizaremos apenas  \textit{dataset} para nos referir a ele). Esse conjunto de dados consiste da 593 sequências de imagens da face de 153 sujeitos onde cada sequências vai do rosto neutro até o pico da expressão.
 
 \section{Procedimento}
 
 \subsection{Organizando os dados}
 
-Inicialmente, foi necessário organizar o \textit{dataset}. No diretório do projeto foram criadas duas pastas chamadas \textit{emotions} e \textit{images}. Os dados contendo os arquivos \textit{.txt} (S005, S010, etc.) ficaram na pasta \textit{emotions} e as imagens em \textit{images}. Também foi criada uma pasta chamada \textit{sorted} para armazernar as imagens de emoções ordenadas por nome (\textit{neutral}, \textit{anger}, etc.). 
+Inicialmente, foi necessário organizar o \textit{dataset} para que os resultados possam ser mais fáceis de serem interpretados. No diretório do projeto foram criadas duas pastas chamadas \textit{emotions} e \textit{images}. Foi criado um diretório chamado \textit{emotions} onde dados contendo os arquivos \textit{.txt} (S005, S010, etc.) foram depositados, já as imagens em um diretório chamado \textit{images}. Também foi criada uma pasta chamada \textit{sorted} para armazernar as imagens de emoções ordenadas pelo nome correspondente as emoções (\textit{neutral}, \textit{anger}, etc.). 
 
-No arquivo \textit{readme}, os autores do \textit{dataset} mencionam que apenas um subconjunto (327 do 593) das seqüências realmente contém as emoções. Cada sequência de imagens consiste na formação de uma expressão emocional, começando com um rosto neutro e terminando com a emoção. Então, a partir de cada sequência de imagens, extraímos duas imagens: uma neutra (a primeira imagem) e uma com a expressão emocional (a última). Para ajudar a fazer essa separação, foi necessário um pequeno script:
+No arquivo \textit{readme}, os autores do \textit{dataset} mencionam que apenas um subconjunto (327 do 593) das seqüências realmente contém as emoções. Cada sequência de imagens consiste na formação de uma expressão emocional, começando com um rosto neutro e terminando com a emoção. Então, a partir de cada sequência de imagens, extraímos duas imagens: uma neutra (a primeira imagem) e uma com a expressão emocional (a última) como foi explicado anteriormente. Para ajudar a fazer essa separação, foi necessário um pequeno script:
 
 \inputminted[
 frame=lines,
@@ -102,11 +110,11 @@ fontsize=\footnotesize,
 linenos
 ]{python}{extract_faces.py}
 
-O último passo foi filtrar o nosso \textit{dataset}. Como a maioria dos participantes tem várias amostras de expressões, temos algumas repetidas imagens da mesma pessoa. Neste caso, o trabalho de remoção foi manual.
+O último passo foi filtrar do nosso \textit{dataset} as imagens neutras, pois como a maioria dos participantes tem várias amostras de expressões, temos algumas imagens s repetidas da mesma pessoa. Neste caso, o trabalho de remoção foi manual.
 
-\section{Extraindo características das faces}
+\subsection{Extraindo características das faces}
 
-Para treinar nosso datase usando dlib, foi necessário extrair algumas características da imagem para que o classificador trabalhe corretamente. A forma que foi feita essa extração da informação foi obtendo as coordenadas do ponto central do rosto e, em seguida, obter a posição de todos os pontos relativos a este ponto central. Isso se faz necessário para evitar que o classificador trabalhe com o posicionamento absoluto dos pontos, visto que a pessoa pode apresentar a mesma expressão, porém os pontos estão em posições diferentes da tela. As faces também podem estar inclinadas, o que pode confundir o classificador. Foi feita um correção simples para amenizar esse problema.
+Para treinar nosso \textit{dataset} usando dlib, foi necessário extrair algumas características da imagem para que o classificador trabalhe corretamente. A forma que foi feita essa extração da informação foi obtendo as coordenadas do ponto central do rosto e, em seguida, obter a posição de todos os pontos relativos a este ponto central, ao total o Dlib mapeia a face com 68 pontos (figura \ref{fig:faceLandmarksDlib}). Isso se faz necessário para evitar que o classificador trabalhe com o posicionamento absoluto dos pontos, visto que a pessoa pode apresentar a mesma expressão, porém os pontos estão em posições diferentes da tela. As faces também podem estar inclinadas, o que pode confundir o classificador. Foi feita um correção simples para amenizar esse problema que consiste em calcular a correção do deslocamento da face tomando a ponta do nariz e encontrando o ângulo que o nariz faz em relação à imagem , e assim encontrar o deslocamento angular que precisamos aplicar.
 
 \section{Rodando o experimento}
 
@@ -134,27 +142,39 @@ A primeira coisa a se notar é que temos poucos exemplos de emoções. Isso faz 
 
 O repositório desse projeto pode ser encontrado em \url{https://github.com/djalmajr/emotion-recognition}
 
+\clearpage
 \newpage
 \section{Figuras}
 
 \begin{figure}[!ht]
+	\centering
+	\includegraphics[height=10cm, width=10cm]{facial_landmarks_68_markup.jpg}
+	\caption{Mapeamento facial de 68 pontos da biblioteca Dlib}
+	\label{fig:faceLandmarksDlib}
+\end{figure}
+
+\begin{figure}[!ht]
   \centering
-  \includegraphics[height=6cm, width=6cm]{fishface.png}
+  \includegraphics[height=7cm, width=7cm]{fishface.png}
   \caption{Precisão utilizando fishface}
   \label{fig:fishface}
 \end{figure}
 
 \begin{figure}[!ht]
   \centering
-  \includegraphics[height=6cm, width=6cm]{landmarks.png}
+  \includegraphics[height=7cm, width=7cm]{landmarks.png}
   \caption{Precisão utilizando landmarks}
   \label{fig:landmarks}
 \end{figure}
 
+\clearpage
 \newpage
 \section{Referências}
 
 van Gent, P. (2016). Emotion Recognition With Python, OpenCV and a Face Dataset. Retrieved from: http://www.paulvangent.com/2016/04/01/emotion-recognition-with-python-opencv-and-a-face-dataset/ \\
+
+van Gent, P. (2016). Emotion Recognition With Python, OpenCV and a Face Dataset. A tech blog about fun things with Python and embedded electronics. Retrieved from:
+http://www.paulvangent.com/2016/04/01/emotion-recognition-with-python-opencv-and-a-face-dataset/ \\
 
 Adrian Rosebrock, (2017). Facial landmarks with dlib, OpenCV, and Python. Retrieved from: https://www.pyimagesearch.com/2017/04/03/facial-landmarks-dlib-opencv-python/
 
